@@ -1,9 +1,12 @@
 package com.jjsh.game2048.presentation.ui.view
 
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
+import com.jjsh.game2048.presentation.ui.common.Colors
 
 class GameView(
     context: Context,
@@ -13,6 +16,8 @@ class GameView(
     private var boardWidth: Int = 0
     private var viewHeight: Int = 0
     private var blockSize: Int = 0
+
+    private lateinit var paint: Paint
 
     private lateinit var backgroundBlocks: Array<Array<RectF>>
 
@@ -34,6 +39,9 @@ class GameView(
         this.boardWidth = w
         this.viewHeight = h
 
+        paint = Paint()
+        paint.isAntiAlias = true
+
         createBackgroundBlocks()
     }
 
@@ -46,6 +54,25 @@ class GameView(
                     j * (blockSize + SPACING).toFloat() + blockSize,
                     i * (blockSize + SPACING).toFloat() + blockSize
                 )
+            }
+        }
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+
+        canvas.drawColor(Colors.RED[Colors.IDX_100])
+
+        drawBackground(canvas)
+    }
+
+    private fun drawBackground(c: Canvas) {
+        if (backgroundBlocks.isNotEmpty()) {
+            paint.color = Colors.RED[Colors.IDX_200]
+            for (blocks in backgroundBlocks) {
+                for (block in blocks) {
+                    c.drawRoundRect(block, 14f, 14f, paint)
+                }
             }
         }
     }
