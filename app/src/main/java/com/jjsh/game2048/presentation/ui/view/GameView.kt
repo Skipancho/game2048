@@ -11,7 +11,7 @@ import com.jjsh.game2048.presentation.ui.common.Colors
 class GameView(
     context: Context,
     attributeSet: AttributeSet? = null
-) : View(context,attributeSet){
+) : View(context, attributeSet) {
 
     private var boardWidth: Int = 0
     private var viewHeight: Int = 0
@@ -20,6 +20,9 @@ class GameView(
     private lateinit var paint: Paint
 
     private lateinit var backgroundBlocks: Array<Array<RectF>>
+
+    private lateinit var gameBlocks: Array<Array<GameBlock?>>
+    private lateinit var gameNumbers: Array<IntArray>
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
@@ -43,6 +46,7 @@ class GameView(
         paint.isAntiAlias = true
 
         createBackgroundBlocks()
+        createGameData()
     }
 
     private fun createBackgroundBlocks() {
@@ -58,12 +62,53 @@ class GameView(
         }
     }
 
+    private fun createGameData() {
+        gameBlocks = Array(BLOCK_COUNT) { Array(BLOCK_COUNT) { null } }
+        gameNumbers = Array(BLOCK_COUNT) { IntArray(BLOCK_COUNT) { 0 } }
+
+        createNewNumber()
+    }
+
+    private fun createNewNumber() {
+        val (r, c) = getRandomPosition()
+        if (r == -1) return
+
+        gameNumbers[r][c] = 2
+
+        makeGameBlocksFromNumbers()
+    }
+
+    private fun makeGameBlocksFromNumbers() {
+        for (r in gameNumbers.indices) {
+            for (c in gameNumbers[r].indices) {
+                gameBlocks[r][c] = if (gameNumbers[r][c] > 0)
+                    GameBlock(blockSize, gameNumbers[r][c], r, c)
+                else null
+            }
+        }
+    }
+
+    private fun getRandomPosition(): Pair<Int, Int> {
+        for (idx in 0 until BLOCK_COUNT * BLOCK_COUNT) {
+            val r = idx / BLOCK_COUNT
+            val c = idx % BLOCK_COUNT
+            if (gameNumbers[r][c] == 0) {
+                return Pair(r, c)
+            }
+        }
+        return Pair(-1, -1)
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
         canvas.drawColor(Colors.RED[Colors.IDX_100])
 
         drawBackground(canvas)
+
+        drawGameBlocks(canvas)
+
+        invalidate()
     }
 
     private fun drawBackground(c: Canvas) {
@@ -72,6 +117,16 @@ class GameView(
             for (blocks in backgroundBlocks) {
                 for (block in blocks) {
                     c.drawRoundRect(block, 14f, 14f, paint)
+                }
+            }
+        }
+    }
+
+    private fun drawGameBlocks(c: Canvas) {
+        if (gameBlocks.isNotEmpty()) {
+            for (blocks in gameBlocks){
+                for (block in blocks) {
+                    block?.draw(c)
                 }
             }
         }
