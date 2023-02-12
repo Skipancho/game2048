@@ -8,6 +8,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import com.jjsh.game2048.presentation.ui.common.Colors
+import kotlinx.coroutines.*
 import timber.log.Timber
 import java.util.*
 import kotlin.math.abs
@@ -77,9 +78,15 @@ class GameView(
         val (r, c) = getRandomPosition()
         if (r == -1) return
 
-        gameNumbers[r][c] = 2
+        gameNumbers[r][c] = -2
 
         makeGameBlocksFromNumbers()
+
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(200)
+            makeGameBlocksFromNumbers()
+            cancel()
+        }
     }
 
     private fun makeGameBlocksFromNumbers() {
@@ -87,20 +94,27 @@ class GameView(
             for (c in gameNumbers[r].indices) {
                 gameBlocks[r][c] = if (gameNumbers[r][c] > 0)
                     GameBlock(blockSize, gameNumbers[r][c], r, c)
-                else null
+                else if (gameNumbers[r][c] < 0) {
+                    gameNumbers[r][c] *= -1
+                    GameBlock(blockSize, gameNumbers[r][c], r, c, true)
+                } else null
             }
         }
     }
 
     private fun getRandomPosition(): Pair<Int, Int> {
+        val zeroPosition = mutableListOf<Int>()
         for (idx in 0 until BLOCK_COUNT * BLOCK_COUNT) {
             val r = idx / BLOCK_COUNT
             val c = idx % BLOCK_COUNT
             if (gameNumbers[r][c] == 0) {
-                return Pair(r, c)
+                zeroPosition.add(idx)
             }
         }
-        return Pair(-1, -1)
+        if (zeroPosition.isEmpty()) return Pair(-1, -1)
+
+        val random = zeroPosition.random()
+        return Pair(random / BLOCK_COUNT, random % BLOCK_COUNT)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -128,7 +142,7 @@ class GameView(
 
     private fun drawGameBlocks(c: Canvas) {
         if (gameBlocks.isNotEmpty()) {
-            for (blocks in gameBlocks){
+            for (blocks in gameBlocks) {
                 for (block in blocks) {
                     block?.draw(c)
                 }
@@ -140,7 +154,7 @@ class GameView(
     private var oldY = 0f
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        when(event.action) {
+        when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 oldX = event.x
                 oldY = event.y
@@ -149,16 +163,16 @@ class GameView(
                 val moveX = oldX - event.x
                 val moveY = oldY - event.y
                 if (moveX == 0f && moveY == 0f) return false
-                if (abs(moveX) > abs(moveY)){
-                    if (moveX > 0){
+                if (abs(moveX) > abs(moveY)) {
+                    if (moveX > 0) {
                         moveLeftAction()
-                    }else if (moveX < 0) {
+                    } else if (moveX < 0) {
                         moveRightAction()
                     }
-                }else if (abs(moveX) < abs(moveY)) {
+                } else if (abs(moveX) < abs(moveY)) {
                     if (moveY > 0) {
                         moveUpAction()
-                    }else if (moveY < 0){
+                    } else if (moveY < 0) {
                         moveDownAction()
                     }
                 }
@@ -174,11 +188,11 @@ class GameView(
         for (row in gameNumbers) {
             val stack = Stack<Int>()
 
-            for (idx in row.indices){
-                if (stack.isNotEmpty() && stack.peek() == row[idx]){
+            for (idx in row.indices) {
+                if (stack.isNotEmpty() && stack.peek() == row[idx]) {
                     stack.add(stack.pop() + row[idx])
                     stack.add(0)
-                }else {
+                } else if (row[idx] > 0) {
                     stack.add(row[idx])
                 }
             }
@@ -187,15 +201,15 @@ class GameView(
             while (stack.isNotEmpty()) {
                 val cur = stack.pop()
                 if (cur > 0) {
-                    newRow.add(0,cur)
+                    newRow.add(0, cur)
                 }
             }
 
             var newRowIdx = 0
-            for (n in newRow){
+            for (n in newRow) {
                 row[newRowIdx++] = n
             }
-            for (i in newRowIdx .. row.lastIndex) {
+            for (i in newRowIdx..row.lastIndex) {
                 row[i] = 0
             }
         }
@@ -204,14 +218,14 @@ class GameView(
 
     private fun moveDownAction() {
         Timber.e("moveDown")
-        for (row in gameNumbers ) {
+        for (row in gameNumbers) {
             val stack = Stack<Int>()
 
-            for (idx in row.lastIndex downTo 0){
-                if (stack.isNotEmpty() && stack.peek() == row[idx]){
+            for (idx in row.lastIndex downTo 0) {
+                if (stack.isNotEmpty() && stack.peek() == row[idx]) {
                     stack.add(stack.pop() + row[idx])
                     stack.add(0)
-                }else {
+                } else if (row[idx] > 0) {
                     stack.add(row[idx])
                 }
             }
@@ -220,12 +234,12 @@ class GameView(
             while (stack.isNotEmpty()) {
                 val cur = stack.pop()
                 if (cur > 0) {
-                    newRow.add(0,cur)
+                    newRow.add(0, cur)
                 }
             }
 
             var newRowIdx = row.lastIndex
-            for (n in newRow){
+            for (n in newRow) {
                 row[newRowIdx--] = n
             }
 
@@ -238,13 +252,13 @@ class GameView(
 
     private fun moveLeftAction() {
         Timber.e("moveLeft")
-        for (c in gameNumbers[0].indices){
+        for (c in gameNumbers[0].indices) {
             val stack = Stack<Int>()
-            for (r in gameNumbers.indices){
-                if (stack.isNotEmpty() && stack.peek() == gameNumbers[r][c]){
+            for (r in gameNumbers.indices) {
+                if (stack.isNotEmpty() && stack.peek() == gameNumbers[r][c]) {
                     stack.add(stack.pop() + gameNumbers[r][c])
                     stack.add(0)
-                }else {
+                } else if (gameNumbers[r][c] > 0) {
                     stack.add(gameNumbers[r][c])
                 }
             }
@@ -252,16 +266,16 @@ class GameView(
             while (stack.isNotEmpty()) {
                 val cur = stack.pop()
                 if (cur > 0) {
-                    newCol.add(0,cur)
+                    newCol.add(0, cur)
                 }
             }
 
             var newColIdx = 0
-            for (n in newCol){
+            for (n in newCol) {
                 gameNumbers[newColIdx++][c] = n
             }
 
-            for (i in newColIdx .. gameNumbers[c].lastIndex) {
+            for (i in newColIdx..gameNumbers[c].lastIndex) {
                 gameNumbers[i][c] = 0
             }
         }
@@ -270,13 +284,13 @@ class GameView(
 
     private fun moveRightAction() {
         Timber.e("moveRight")
-        for (c in gameNumbers[0].indices){
+        for (c in gameNumbers[0].indices) {
             val stack = Stack<Int>()
-            for (r in gameNumbers.lastIndex downTo 0){
-                if (stack.isNotEmpty() && stack.peek() == gameNumbers[r][c]){
+            for (r in gameNumbers.lastIndex downTo 0) {
+                if (stack.isNotEmpty() && stack.peek() == gameNumbers[r][c]) {
                     stack.add(stack.pop() + gameNumbers[r][c])
                     stack.add(0)
-                }else {
+                } else if (gameNumbers[r][c] > 0) {
                     stack.add(gameNumbers[r][c])
                 }
             }
@@ -284,12 +298,12 @@ class GameView(
             while (stack.isNotEmpty()) {
                 val cur = stack.pop()
                 if (cur > 0) {
-                    newCol.add(0,cur)
+                    newCol.add(0, cur)
                 }
             }
 
             var newColIdx = gameNumbers[c].lastIndex
-            for (n in newCol){
+            for (n in newCol) {
                 gameNumbers[newColIdx--][c] = n
             }
 
