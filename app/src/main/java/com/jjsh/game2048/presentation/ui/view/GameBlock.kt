@@ -10,7 +10,8 @@ class GameBlock(
     private val blockSize: Int,
     private val number: Int,
     private val x: Int = 0,
-    private val y: Int = 0
+    private val y: Int = 0,
+    isFirstCreated: Boolean = false
 ) {
 
     private val paint: Paint = Paint()
@@ -20,10 +21,10 @@ class GameBlock(
     init {
         val colorIdx = findColorIdx()
         paint.isAntiAlias = true
-        paint.color = default_colors[colorIdx]
+        paint.color = if (isFirstCreated) Colors.AMBER[colorIdx] else default_colors[colorIdx]
 
         textPaint.isAntiAlias = true
-        textPaint.color = Colors.GREY[9-colorIdx]
+        textPaint.color = Colors.GREY[9 - colorIdx]
         textPaint.textSize = blockSize.toFloat() / 3
         textPaint.textAlign = Paint.Align.CENTER
     }
