@@ -5,7 +5,9 @@ import androidx.activity.viewModels
 import com.jjsh.game2048.R
 import com.jjsh.game2048.databinding.ActivityMainBinding
 import com.jjsh.game2048.presentation.base.BaseActivity
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
 
     private val viewModel by viewModels<MainViewModel>()
