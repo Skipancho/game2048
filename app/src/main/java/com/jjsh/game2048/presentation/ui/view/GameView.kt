@@ -10,8 +10,6 @@ import android.view.View
 import androidx.databinding.BindingAdapter
 import com.jjsh.game2048.presentation.ui.common.Colors
 import kotlinx.coroutines.*
-import timber.log.Timber
-import java.util.*
 import kotlin.math.abs
 
 class GameView(
@@ -30,6 +28,8 @@ class GameView(
 
     private lateinit var gameBlocks: Array<Array<GameBlock?>>
     private lateinit var gameMap: Array<IntArray>
+
+    private lateinit var moveAction: (MoveState) -> Boolean
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
@@ -81,26 +81,30 @@ class GameView(
 
         gameMap[r][c] = -2
 
-        makeGameBlocksFromNumbers()
+        val loc = makeGameBlocksFromNumbers()
 
         CoroutineScope(Dispatchers.Main).launch {
             delay(200)
-            makeGameBlocksFromNumbers()
+            gameBlocks[loc.first][loc.second] = GameBlock(blockSize, gameMap[r][c], r, c)
             cancel()
         }
     }
 
-    private fun makeGameBlocksFromNumbers() {
+    private fun makeGameBlocksFromNumbers() : Pair<Int, Int>{
+        var (i ,j) = Pair(-1 , -1)
         for (r in gameMap.indices) {
             for (c in gameMap[r].indices) {
                 gameBlocks[r][c] = if (gameMap[r][c] > 0)
                     GameBlock(blockSize, gameMap[r][c], r, c)
                 else if (gameMap[r][c] < 0) {
+                    i = r
+                    j = c
                     gameMap[r][c] *= -1
                     GameBlock(blockSize, gameMap[r][c], r, c, true)
                 } else null
             }
         }
+        return Pair(i, j)
     }
 
     private fun getRandomPosition(): Pair<Int, Int> {
@@ -124,7 +128,6 @@ class GameView(
         canvas.drawColor(Colors.RED[Colors.IDX_100])
 
         drawBackground(canvas)
-
         drawGameBlocks(canvas)
 
         invalidate()
@@ -164,155 +167,27 @@ class GameView(
                 val moveX = oldX - event.x
                 val moveY = oldY - event.y
                 if (moveX == 0f && moveY == 0f) return false
-                if (abs(moveX) > abs(moveY)) {
-                    if (moveX > 0) {
-                        moveLeftAction()
-                    } else if (moveX < 0) {
-                        moveRightAction()
-                    }
-                } else if (abs(moveX) < abs(moveY)) {
-                    if (moveY > 0) {
-                        moveUpAction()
-                    } else if (moveY < 0) {
-                        moveDownAction()
-                    }
+                val createNew = when {
+                    abs(moveX) > abs(moveY) ->
+                        when {
+                            moveX > 0 -> moveAction(MoveState.LEFT)
+                            moveX < 0 -> moveAction(MoveState.RIGHT)
+                            else -> false
+                        }
+                    abs(moveX) < abs(moveY) ->
+                        when {
+                            moveY > 0 -> moveAction(MoveState.UP)
+                            moveY < 0 -> moveAction(MoveState.DOWN)
+                            else -> false
+                        }
+                    else -> false
                 }
+                if (createNew) createNewNumber()
+                else makeGameBlocksFromNumbers()
+                performClick()
             }
         }
-
-        performClick()
         return true
-    }
-
-    private fun moveUpAction() {
-        Timber.e("moveUp")
-        for (row in gameMap) {
-            val stack = Stack<Int>()
-
-            for (idx in row.indices) {
-                if (stack.isNotEmpty() && stack.peek() == row[idx]) {
-                    stack.add(stack.pop() + row[idx])
-                    stack.add(0)
-                } else if (row[idx] > 0) {
-                    stack.add(row[idx])
-                }
-            }
-
-            val newRow = mutableListOf<Int>()
-            while (stack.isNotEmpty()) {
-                val cur = stack.pop()
-                if (cur > 0) {
-                    newRow.add(0, cur)
-                }
-            }
-
-            var newRowIdx = 0
-            for (n in newRow) {
-                row[newRowIdx++] = n
-            }
-            for (i in newRowIdx..row.lastIndex) {
-                row[i] = 0
-            }
-        }
-        createNewNumber()
-    }
-
-    private fun moveDownAction() {
-        Timber.e("moveDown")
-        for (row in gameMap) {
-            val stack = Stack<Int>()
-
-            for (idx in row.lastIndex downTo 0) {
-                if (stack.isNotEmpty() && stack.peek() == row[idx]) {
-                    stack.add(stack.pop() + row[idx])
-                    stack.add(0)
-                } else if (row[idx] > 0) {
-                    stack.add(row[idx])
-                }
-            }
-
-            val newRow = mutableListOf<Int>()
-            while (stack.isNotEmpty()) {
-                val cur = stack.pop()
-                if (cur > 0) {
-                    newRow.add(0, cur)
-                }
-            }
-
-            var newRowIdx = row.lastIndex
-            for (n in newRow) {
-                row[newRowIdx--] = n
-            }
-
-            for (i in newRowIdx downTo 0) {
-                row[i] = 0
-            }
-        }
-        createNewNumber()
-    }
-
-    private fun moveLeftAction() {
-        Timber.e("moveLeft")
-        for (c in gameMap[0].indices) {
-            val stack = Stack<Int>()
-            for (r in gameMap.indices) {
-                if (stack.isNotEmpty() && stack.peek() == gameMap[r][c]) {
-                    stack.add(stack.pop() + gameMap[r][c])
-                    stack.add(0)
-                } else if (gameMap[r][c] > 0) {
-                    stack.add(gameMap[r][c])
-                }
-            }
-            val newCol = mutableListOf<Int>()
-            while (stack.isNotEmpty()) {
-                val cur = stack.pop()
-                if (cur > 0) {
-                    newCol.add(0, cur)
-                }
-            }
-
-            var newColIdx = 0
-            for (n in newCol) {
-                gameMap[newColIdx++][c] = n
-            }
-
-            for (i in newColIdx..gameMap[c].lastIndex) {
-                gameMap[i][c] = 0
-            }
-        }
-        createNewNumber()
-    }
-
-    private fun moveRightAction() {
-        Timber.e("moveRight")
-        for (c in gameMap[0].indices) {
-            val stack = Stack<Int>()
-            for (r in gameMap.lastIndex downTo 0) {
-                if (stack.isNotEmpty() && stack.peek() == gameMap[r][c]) {
-                    stack.add(stack.pop() + gameMap[r][c])
-                    stack.add(0)
-                } else if (gameMap[r][c] > 0) {
-                    stack.add(gameMap[r][c])
-                }
-            }
-            val newCol = mutableListOf<Int>()
-            while (stack.isNotEmpty()) {
-                val cur = stack.pop()
-                if (cur > 0) {
-                    newCol.add(0, cur)
-                }
-            }
-
-            var newColIdx = gameMap[c].lastIndex
-            for (n in newCol) {
-                gameMap[newColIdx--][c] = n
-            }
-
-            for (i in newColIdx downTo 0) {
-                gameMap[i][c] = 0
-            }
-        }
-        createNewNumber()
     }
 
     override fun performClick(): Boolean {
@@ -328,6 +203,10 @@ class GameView(
         this.blockCount = blockCount
     }
 
+    fun setMoveAction(moveAction: (MoveState) -> Boolean) {
+        this.moveAction = moveAction
+    }
+
     companion object {
         const val SPACING = 2
     }
@@ -341,4 +220,13 @@ fun GameView.setGameMap(numbers: Array<IntArray>) {
 @BindingAdapter("blockCount")
 fun GameView.setBlockCount(blockCount: Int) {
     setCount(blockCount)
+}
+
+@BindingAdapter("onMove")
+fun GameView.setOnMoveEvent(moveAction: (MoveState) -> Boolean) {
+    setMoveAction(moveAction)
+}
+
+enum class MoveState {
+    UP, DOWN, LEFT, RIGHT
 }

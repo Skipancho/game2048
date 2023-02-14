@@ -21,7 +21,8 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:blockCount="@{viewModel.blockCount}"
-            app:gameMap="@{viewModel.gameMap}"/>
+            app:gameMap="@{viewModel.gameMap}"
+            app:onMove="@{viewModel.moveAction}"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
