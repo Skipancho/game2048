@@ -19,6 +19,7 @@ class GameView(
 
     private var boardWidth: Int = 0
     private var viewHeight: Int = 0
+    private var verticalPadding: Int = 0
     private var blockSize: Int = 0
     private var blockCount: Int = 4
 
@@ -39,15 +40,16 @@ class GameView(
             val blockSize = (width - (SPACING * (blockCount + 1))) / blockCount
             val w = blockSize * blockCount + SPACING * (blockCount - 1)
             val h = blockSize * blockCount + SPACING * (blockCount + 1)
-
-            initGame(w, h, blockSize)
+            val padding = (height - width) / 2
+            initGame(w, h, blockSize, padding)
         }
     }
 
-    private fun initGame(w: Int, h: Int, blockSize: Int) {
+    private fun initGame(w: Int, h: Int, blockSize: Int, padding: Int) {
         this.blockSize = blockSize
         this.boardWidth = w
         this.viewHeight = h
+        this.verticalPadding = padding
 
         paint = Paint()
         paint.isAntiAlias = true
@@ -61,9 +63,9 @@ class GameView(
             Array(blockCount) { j ->
                 RectF(
                     j * (blockSize + SPACING).toFloat() + SPACING,
-                    i * (blockSize + SPACING).toFloat() + SPACING,
+                    i * (blockSize + SPACING).toFloat() + SPACING + verticalPadding,
                     j * (blockSize + SPACING).toFloat() + blockSize,
-                    i * (blockSize + SPACING).toFloat() + blockSize
+                    i * (blockSize + SPACING).toFloat() + blockSize + verticalPadding
                 )
             }
         }
@@ -85,22 +87,23 @@ class GameView(
 
         CoroutineScope(Dispatchers.Main).launch {
             delay(200)
-            gameBlocks[loc.first][loc.second] = GameBlock(blockSize, gameMap[r][c], r, c)
+            gameBlocks[loc.first][loc.second] =
+                GameBlock(blockSize, gameMap[r][c], r, c, verticalPadding)
             cancel()
         }
     }
 
-    private fun makeGameBlocksFromNumbers() : Pair<Int, Int>{
-        var (i ,j) = Pair(-1 , -1)
+    private fun makeGameBlocksFromNumbers(): Pair<Int, Int> {
+        var (i, j) = Pair(-1, -1)
         for (r in gameMap.indices) {
             for (c in gameMap[r].indices) {
                 gameBlocks[r][c] = if (gameMap[r][c] > 0)
-                    GameBlock(blockSize, gameMap[r][c], r, c)
+                    GameBlock(blockSize, gameMap[r][c], r, c, verticalPadding)
                 else if (gameMap[r][c] < 0) {
                     i = r
                     j = c
                     gameMap[r][c] *= -1
-                    GameBlock(blockSize, gameMap[r][c], r, c, true)
+                    GameBlock(blockSize, gameMap[r][c], r, c, verticalPadding, true)
                 } else null
             }
         }
@@ -206,6 +209,8 @@ class GameView(
     fun setMoveAction(moveAction: (MoveState) -> Boolean) {
         this.moveAction = moveAction
     }
+
+
 
     companion object {
         const val SPACING = 2

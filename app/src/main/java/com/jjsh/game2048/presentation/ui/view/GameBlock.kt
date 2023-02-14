@@ -11,6 +11,7 @@ class GameBlock(
     private val number: Int,
     private val x: Int = 0,
     private val y: Int = 0,
+    private val verticalPadding : Int = 0,
     isFirstCreated: Boolean = false
 ) {
 
@@ -41,7 +42,7 @@ class GameBlock(
 
     fun draw(c: Canvas) {
         rectF.left = x * blockSize.toFloat() + (x + 1) * GameView.SPACING
-        rectF.top = y * blockSize.toFloat() + (y + 1) * GameView.SPACING
+        rectF.top = y * blockSize.toFloat() + (y + 1) * GameView.SPACING + verticalPadding
         rectF.right = rectF.left + blockSize
         rectF.bottom = rectF.top + blockSize
 
