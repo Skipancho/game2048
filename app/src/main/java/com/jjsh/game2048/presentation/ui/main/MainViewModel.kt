@@ -2,6 +2,7 @@ package com.jjsh.game2048.presentation.ui.main
 
 import androidx.lifecycle.ViewModel
 import com.jjsh.game2048.domain.usecase.MoveNumbersUseCase
+import com.jjsh.game2048.presentation.ui.view.GameObserver
 import com.jjsh.game2048.presentation.ui.view.MoveState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,13 +12,16 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val moveNumbersUseCase: MoveNumbersUseCase
-) : ViewModel() {
+) : ViewModel(), GameObserver {
     private val _blockCount = MutableStateFlow(4)
     val blockCount: StateFlow<Int> get() = _blockCount
 
     private val _gameMap =
         MutableStateFlow(Array(blockCount.value) { IntArray(blockCount.value) { 0 } })
     val gameMap: StateFlow<Array<IntArray>> get() = _gameMap
+
+    private val _gameScore = MutableStateFlow<Int>(0)
+    val gameScore: StateFlow<Int> get() = _gameScore
 
     private lateinit var beforeGameMap: List<IntArray>
 
@@ -41,5 +45,9 @@ class MainViewModel @Inject constructor(
             }
         }
         return false
+    }
+
+    override fun notifyGameScoreChanged() {
+        _gameScore.value = gameMap.value.sumOf { it.sum() }
     }
 }

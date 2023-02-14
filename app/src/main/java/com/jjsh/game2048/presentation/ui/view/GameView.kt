@@ -32,6 +32,8 @@ class GameView(
 
     private lateinit var moveAction: (MoveState) -> Boolean
 
+    private lateinit var gameObserver: GameObserver
+
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
         val height = bottom - top
@@ -85,6 +87,8 @@ class GameView(
 
         val loc = makeGameBlocksFromNumbers()
 
+        gameObserver.notifyGameScoreChanged()
+
         CoroutineScope(Dispatchers.Main).launch {
             delay(200)
             gameBlocks[loc.first][loc.second] =
@@ -128,7 +132,7 @@ class GameView(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        canvas.drawColor(Colors.RED[Colors.IDX_100])
+        //canvas.drawColor(Colors.RED[Colors.IDX_100])
 
         drawBackground(canvas)
         drawGameBlocks(canvas)
@@ -210,7 +214,9 @@ class GameView(
         this.moveAction = moveAction
     }
 
-
+    fun setObserver(gameObserver: GameObserver) {
+        this.gameObserver = gameObserver
+    }
 
     companion object {
         const val SPACING = 2
@@ -232,6 +238,16 @@ fun GameView.setOnMoveEvent(moveAction: (MoveState) -> Boolean) {
     setMoveAction(moveAction)
 }
 
+@BindingAdapter("gameObserver")
+fun GameView.setGameObserver(gameObserver: GameObserver) {
+    setObserver(gameObserver)
+}
+
 enum class MoveState {
     UP, DOWN, LEFT, RIGHT
 }
+
+interface GameObserver {
+    fun notifyGameScoreChanged()
+}
+
