@@ -81,7 +81,10 @@ class GameView(
 
     private fun createNewNumber() {
         val (r, c) = getRandomPosition()
-        if (r == -1) return
+        if (r == -1) {
+            gameObserver.notifyGameMapFulled()
+            return
+        }
 
         gameMap[r][c] = -2
 
@@ -190,11 +193,20 @@ class GameView(
                     else -> false
                 }
                 if (createNew) createNewNumber()
-                else makeGameBlocksFromNumbers()
+                else {
+                    checkMapFulled()
+                    makeGameBlocksFromNumbers()
+                }
+
                 performClick()
             }
         }
         return true
+    }
+
+    private fun checkMapFulled() {
+        if (gameMap.find { array -> array.find { it == 0 } != null  } != null) return
+        gameObserver.notifyGameMapFulled()
     }
 
     override fun performClick(): Boolean {
@@ -216,6 +228,15 @@ class GameView(
 
     fun setObserver(gameObserver: GameObserver) {
         this.gameObserver = gameObserver
+    }
+
+    fun refresh() {
+        for (r in gameMap.indices) {
+            for (c in gameMap[r].indices) {
+                gameMap[r][c] = 0
+            }
+        }
+        createNewNumber()
     }
 
     companion object {
@@ -249,5 +270,6 @@ enum class MoveState {
 
 interface GameObserver {
     fun notifyGameScoreChanged()
+    fun notifyGameMapFulled()
 }
 

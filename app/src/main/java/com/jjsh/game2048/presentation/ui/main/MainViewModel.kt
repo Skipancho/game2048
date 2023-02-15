@@ -1,12 +1,14 @@
 package com.jjsh.game2048.presentation.ui.main
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.jjsh.game2048.domain.usecase.MoveNumbersUseCase
 import com.jjsh.game2048.presentation.ui.view.GameObserver
 import com.jjsh.game2048.presentation.ui.view.MoveState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -24,6 +26,9 @@ class MainViewModel @Inject constructor(
     val gameScore: StateFlow<Int> get() = _gameScore
 
     private lateinit var beforeGameMap: List<IntArray>
+
+    private val _gameState = MutableStateFlow<GameState>(GameState.START)
+    val gameState: StateFlow<GameState> get() = _gameState
 
     val moveAction: (MoveState) -> Boolean = {
         beforeGameMap = gameMap.value.map { array -> array.copyOf() }
@@ -47,7 +52,29 @@ class MainViewModel @Inject constructor(
         return false
     }
 
+    fun refreshGame() {
+        setGameState(GameState.RESTART)
+    }
+
+    fun setGameState(state: GameState) {
+        _gameState.value = state
+    }
+
     override fun notifyGameScoreChanged() {
         _gameScore.value = gameMap.value.sumOf { it.sum() }
     }
+
+    override fun notifyGameMapFulled() {
+        if (gameState.value != GameState.PLAYING) return
+
+        viewModelScope.launch {
+            if (moveNumbersUseCase.checkFinish(gameMap.value)){
+                setGameState(GameState.FINISH)
+            }
+        }
+    }
+}
+
+enum class GameState {
+    RESTART, START, PLAYING, FINISH
 }
