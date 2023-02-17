@@ -2,6 +2,7 @@
 <layout>
 
     <data>
+
         <variable
             name="viewModel"
             type="com.jjsh.game2048.presentation.ui.main.MainViewModel" />
@@ -12,17 +13,62 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/red_100"
         tools:context=".presentation.ui.main.MainActivity">
 
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/gl_center_vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.5" />
+
+        <TextView
+            android:id="@+id/tv_title_game_score"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="@id/gl_center_vertical"
+            android:gravity="center"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:text="@string/text_score" />
+
+        <TextView
+            android:id="@+id/tv_game_score"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="50sp"
+            android:textStyle="bold"
+            android:text="@{String.valueOf(viewModel.gameScore)}"
+            app:layout_constraintTop_toBottomOf="@id/tv_title_game_score"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="@id/gl_center_vertical"
+            tools:text="1024" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btn_refresh"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@drawable/ic_baseline_refresh_24"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_margin="20dp"
+            android:onClick="@{() -> viewModel.refreshGame()}"/>
+
         <com.jjsh.game2048.presentation.ui.view.GameView
+            android:id="@+id/gv_game"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintDimensionRatio="1:1.4"
             app:layout_constraintBottom_toBottomOf="parent"
             app:blockCount="@{viewModel.blockCount}"
             app:gameMap="@{viewModel.gameMap}"
-            app:onMove="@{viewModel.moveAction}"/>
+            app:onMove="@{viewModel.moveAction}"
+            app:gameObserver="@{viewModel}" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

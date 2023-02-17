@@ -126,4 +126,34 @@ class MoveNumbersUseCase @Inject constructor() {
             }
         }
     }
+
+    fun checkFinish(gameMap: Array<IntArray>) : Boolean {
+        val curMap = gameMap.map { it.clone() }.toTypedArray()
+        val nextMap = gameMap.map { it.clone() }.toTypedArray()
+
+        moveUpAction(nextMap)
+        if (compareMap(curMap,nextMap)) return false
+
+        moveDownAction(nextMap)
+        if (compareMap(curMap,nextMap)) return false
+
+        moveLeftAction(nextMap)
+        if (compareMap(curMap,nextMap)) return false
+
+        moveRightAction(nextMap)
+        if (compareMap(curMap,nextMap)) return false
+
+        return true
+    }
+
+    private fun compareMap(first : Array<IntArray>, second : Array<IntArray>): Boolean {
+        for (r in first.indices) {
+            for (c in first[r].indices) {
+                if (first[r][c] != second[r][c]) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
 }
