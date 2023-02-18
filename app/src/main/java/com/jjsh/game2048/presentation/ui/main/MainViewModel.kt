@@ -43,14 +43,7 @@ class MainViewModel @Inject constructor(
     }
 
     private fun compareMap(): Boolean {
-        for (r in beforeGameMap.indices) {
-            for (c in beforeGameMap[r].indices) {
-                if (beforeGameMap[r][c] != gameMap.value[r][c]) {
-                    return true
-                }
-            }
-        }
-        return false
+        return moveNumbersUseCase.compareMap(beforeGameMap.toTypedArray(),gameMap.value)
     }
 
     fun refreshGame() {
