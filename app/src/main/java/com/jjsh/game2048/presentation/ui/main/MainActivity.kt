@@ -1,12 +1,16 @@
 package com.jjsh.game2048.presentation.ui.main
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import com.jjsh.game2048.R
 import com.jjsh.game2048.databinding.ActivityMainBinding
 import com.jjsh.game2048.presentation.base.BaseActivity
+import com.jjsh.game2048.presentation.ui.view.GameState
+import com.jjsh.game2048.presentation.ui.view.MoveState
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
@@ -25,17 +29,20 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
             when(it) {
                 GameState.RESTART -> {
                     binding.gvGame.refresh()
-                    viewModel.setGameState(GameState.START)
-                }
-                GameState.START -> {
                     viewModel.setGameState(GameState.PLAYING)
                 }
+                GameState.START -> {
+                    binding.layoutNotify.isVisible = true
+                    binding.tvNotify.text = "Start"
+                    binding.ivStart.setImageResource(R.drawable.ic_baseline_play_arrow_24)
+                }
                 GameState.PLAYING -> {
-                    //none
+                    binding.layoutNotify.isVisible = false
                 }
                 GameState.FINISH -> {
-                    // todo. finish action
-                    Toast.makeText(this, "끝", Toast.LENGTH_SHORT).show()
+                    binding.layoutNotify.isVisible = true
+                    binding.tvNotify.text = "Restart"
+                    binding.ivStart.setImageResource(R.drawable.ic_baseline_refresh_24)
                 }
             }
         }
