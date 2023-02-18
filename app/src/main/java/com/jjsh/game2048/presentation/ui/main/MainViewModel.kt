@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jjsh.game2048.domain.usecase.MoveNumbersUseCase
 import com.jjsh.game2048.presentation.ui.view.GameObserver
+import com.jjsh.game2048.presentation.ui.view.GameState
 import com.jjsh.game2048.presentation.ui.view.MoveState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,6 +57,14 @@ class MainViewModel @Inject constructor(
         setGameState(GameState.RESTART)
     }
 
+    fun startGame() {
+        if (gameState.value == GameState.START) {
+            setGameState(GameState.PLAYING)
+        } else if (gameState.value == GameState.FINISH) {
+            refreshGame()
+        }
+    }
+
     fun setGameState(state: GameState) {
         _gameState.value = state
     }
@@ -68,13 +77,9 @@ class MainViewModel @Inject constructor(
         if (gameState.value != GameState.PLAYING) return
 
         viewModelScope.launch {
-            if (moveNumbersUseCase.checkFinish(gameMap.value)){
+            if (moveNumbersUseCase.checkFinish(gameMap.value)) {
                 setGameState(GameState.FINISH)
             }
         }
     }
-}
-
-enum class GameState {
-    RESTART, START, PLAYING, FINISH
 }
