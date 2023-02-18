@@ -33,6 +33,7 @@ class GameView(
     private lateinit var moveAction: (MoveState) -> Boolean
 
     private lateinit var gameObserver: GameObserver
+    private var gameState: GameState = GameState.START
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
@@ -80,6 +81,7 @@ class GameView(
     }
 
     private fun createNewNumber() {
+        if (gameState != GameState.PLAYING) return
         val (r, c) = getRandomPosition()
         if (r == -1) {
             gameObserver.notifyGameMapFulled()
@@ -137,8 +139,10 @@ class GameView(
 
         //canvas.drawColor(Colors.RED[Colors.IDX_100])
 
-        drawBackground(canvas)
-        drawGameBlocks(canvas)
+        if (gameState == GameState.PLAYING || gameState == GameState.FINISH) {
+            drawBackground(canvas)
+            drawGameBlocks(canvas)
+        }
 
         invalidate()
     }
@@ -168,6 +172,7 @@ class GameView(
     private var oldY = 0f
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (gameState != GameState.PLAYING) return false
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 oldX = event.x
@@ -205,7 +210,7 @@ class GameView(
     }
 
     private fun checkMapFulled() {
-        if (gameMap.find { array -> array.find { it == 0 } != null  } != null) return
+        if (gameMap.find { array -> array.find { it == 0 } != null } != null) return
         gameObserver.notifyGameMapFulled()
     }
 
@@ -228,6 +233,10 @@ class GameView(
 
     fun setObserver(gameObserver: GameObserver) {
         this.gameObserver = gameObserver
+    }
+
+    fun setState(gameState: GameState) {
+        this.gameState = gameState
     }
 
     fun refresh() {
@@ -264,8 +273,17 @@ fun GameView.setGameObserver(gameObserver: GameObserver) {
     setObserver(gameObserver)
 }
 
+@BindingAdapter("gameState")
+fun GameView.setGameState(gameState: GameState) {
+    setState(gameState)
+}
+
 enum class MoveState {
     UP, DOWN, LEFT, RIGHT
+}
+
+enum class GameState {
+    RESTART, START, PLAYING, FINISH
 }
 
 interface GameObserver {
