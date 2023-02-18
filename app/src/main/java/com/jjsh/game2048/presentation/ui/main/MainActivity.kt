@@ -1,12 +1,17 @@
 package com.jjsh.game2048.presentation.ui.main
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
+import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import com.jjsh.game2048.R
 import com.jjsh.game2048.databinding.ActivityMainBinding
 import com.jjsh.game2048.presentation.base.BaseActivity
+import com.jjsh.game2048.presentation.ui.view.GameState
+import com.jjsh.game2048.presentation.ui.view.MoveState
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
@@ -24,18 +29,27 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
         observeFlowWithLifecycle(viewModel.gameState) {
             when(it) {
                 GameState.RESTART -> {
-                    binding.gvGame.refresh()
-                    viewModel.setGameState(GameState.START)
+                    AlertDialog.Builder(this)
+                        .setMessage(getString(R.string.msg_refresh))
+                        .setNegativeButton(getString(R.string.text_no)) { _, _ ->
+                            viewModel.setGameState(GameState.PLAYING)
+                        }.setPositiveButton(getString(R.string.text_yes)) { _, _ ->
+                            binding.gvGame.refresh()
+                            viewModel.setGameState(GameState.PLAYING)
+                        }.show()
                 }
                 GameState.START -> {
-                    viewModel.setGameState(GameState.PLAYING)
+                    binding.layoutNotify.isVisible = true
+                    binding.tvNotify.text = getString(R.string.text_start)
+                    binding.ivStart.setImageResource(R.drawable.ic_baseline_play_arrow_24)
                 }
                 GameState.PLAYING -> {
-                    //none
+                    binding.layoutNotify.isVisible = false
                 }
                 GameState.FINISH -> {
-                    // todo. finish action
-                    Toast.makeText(this, "끝", Toast.LENGTH_SHORT).show()
+                    binding.layoutNotify.isVisible = true
+                    binding.tvNotify.text = getString(R.string.text_restart)
+                    binding.ivStart.setImageResource(R.drawable.ic_baseline_refresh_24)
                 }
             }
         }
