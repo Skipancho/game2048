@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">game2048</string>
     <string name="text_score">Score</string>
+    <string name="text_start">Start</string>
+    <string name="text_restart">Restart</string>
+    <string name="msg_refresh">다시 시작 하시겠습니까?</string>
+    <string name="text_yes">네</string>
+    <string name="text_no">아니오</string>
 </resources>

@@ -81,7 +81,7 @@ class GameView(
     }
 
     private fun createNewNumber() {
-        if (gameState != GameState.PLAYING) return
+        if (checkNewNumberCreate()) return
         val (r, c) = getRandomPosition()
         if (r == -1) {
             gameObserver.notifyGameMapFulled()
@@ -101,6 +101,9 @@ class GameView(
             cancel()
         }
     }
+
+    private fun checkNewNumberCreate(): Boolean =
+        gameState != GameState.PLAYING && gameState != GameState.RESTART
 
     private fun makeGameBlocksFromNumbers(): Pair<Int, Int> {
         var (i, j) = Pair(-1, -1)
@@ -139,10 +142,8 @@ class GameView(
 
         //canvas.drawColor(Colors.RED[Colors.IDX_100])
 
-        if (gameState == GameState.PLAYING || gameState == GameState.FINISH) {
-            drawBackground(canvas)
-            drawGameBlocks(canvas)
-        }
+        drawBackground(canvas)
+        drawGameBlocks(canvas)
 
         invalidate()
     }
